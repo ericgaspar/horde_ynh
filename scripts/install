@@ -35,6 +35,8 @@ sesha_install=$YNH_APP_ARG_SESHA_INSTALL
 ansel_install=$YNH_APP_ARG_ANSEL_INSTALL
 wicked_install=$YNH_APP_ARG_WICKED_INSTALL
 
+app=$YNH_APP_INSTANCE_NAME
+
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
