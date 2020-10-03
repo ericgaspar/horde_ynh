@@ -3,18 +3,20 @@
 #=================================================
 # GENERIC START
 #=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
 
-# Source YunoHost helpers
+source _common.sh
 source /usr/share/yunohost/helpers
 
-# Import common cmd
-source ./experimental_helper.sh
-source ./_common.sh
-
+#=================================================
+# LOAD SETTINGS
+#=================================================
 ynh_script_progression --message="Loading installation settings..."
 
 # Retrieve app settings
 app=$YNH_APP_INSTANCE_NAME
+
 domain=$(ynh_app_setting_get --app $app --key domain)
 port=$(ynh_app_setting_get --app $app --key port)
 db_name=$(ynh_app_setting_get --app $app --key db_name)
@@ -22,30 +24,39 @@ db_user=$(ynh_app_setting_get --app $app --key db_user)
 final_path=$(ynh_app_setting_get --app $app --key final_path)
 
 #=================================================
-# STANDARD REMOVE
+# REMOVE THE MYSQL DATABASE
 #=================================================
-
-# Remove metapackage and its dependencies
-ynh_script_progression --message="Removing dependencies" --weight=10
-ynh_remove_app_dependencies
+ynh_script_progression --message="Removing the MySQL database..." --weight=4
 
 # Remove a database if it exists, along with the associated user
-ynh_script_progression --message="Removing databases..."
-ynh_mysql_remove_db --db_user $db_user --db_name $db_name
+ynh_mysql_remove_db --db_user=$db_name --db_name=$db_name
+
+#=================================================
+# REMOVE APP MAIN DIR
+#=================================================
+ynh_script_progression --message="Removing app main directory..." --weight=4
 
 # Remove the app directory securely
-ynh_script_progression --message="Removing code..."
 ynh_secure_remove --file="$final_path"
 
 # Remove user data
 ynh_script_progression --message="Removing user data..."
 ynh_secure_remove --file="$gollem_data_dir"
 
-# Remove the dedicated nginx config
-ynh_script_progression --message="Removing nginx configuration..."
+#=================================================
+# REMOVE NGINX CONFIGURATION
+#=================================================
+ynh_script_progression --message="Removing NGINX web server configuration..." --weight=1
+
+# Remove the dedicated NGINX config
 ynh_remove_nginx_config
 
-# Remove the dedicated php-fpm config
+#=================================================
+# REMOVE PHP-FPM CONFIGURATION
+#=================================================
+ynh_script_progression --message="Removing PHP-FPM configuration..." --weight=3
+
+# Remove the dedicated PHP-FPM config
 ynh_remove_fpm_config
 
 # Delete a system user
@@ -54,5 +65,9 @@ ynh_system_user_delete --username $app
 
 # Remove the app-specific logrotate config
 ynh_remove_logrotate
+
+#=================================================
+# END OF SCRIPT
+#=================================================
 
 ynh_script_progression --message="Removal of $app completed" --last

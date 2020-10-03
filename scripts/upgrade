@@ -3,20 +3,17 @@
 #=================================================
 # GENERIC START
 #=================================================
-
 # IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
 source /usr/share/yunohost/helpers
 
-# Exit if an error occurs during the execution of the script
-ynh_abort_if_errors
-
-# Import common cmd
-source ./experimental_helper.sh
-source ./_common.sh
-
-ynh_script_progression --message="Loading installation settings..."
-
+#=================================================
 # LOAD SETTINGS
+#=================================================
+ynh_script_progression --message="Loading installation settings..."  --weight=1
+
 domain=$(ynh_app_setting_get --app $app --key domain)
 path_url=$(ynh_normalize_url_path --path_url $(ynh_app_setting_get --app $app --key path))
 admin=$(ynh_app_setting_get --app $app --key admin)
@@ -28,9 +25,36 @@ db_name=$(ynh_app_setting_get --app $app --key db_name)
 db_user=$(ynh_app_setting_get --app $app --key db_user)
 db_pwd=$(ynh_app_setting_get --app $app --key mysqlpwd)
 
+#=================================================
+# CHECK VERSION
+#=================================================
+
+upgrade_type=$(ynh_check_app_version_changed)
+
+#=================================================
+# ENSURE DOWNWARD COMPATIBILITY
+#=================================================
+ynh_script_progression --message="Ensuring downward compatibility..."  --weight=2
+
+# If final_path doesn't exist, create it
+if [ -z "$final_path" ]; then
+	final_path=/var/www/$app
+	ynh_app_setting_set --app=$app --key=final_path --value=$final_path
+fi
+
+# If db_name doesn't exist, create it
+if [ -z "$db_name" ]; then
+	db_name=$(ynh_sanitize_dbid --db_name=$app)
+	ynh_app_setting_set --app=$app --key=db_name --value=$db_name
+fi
+
+#=================================================
+# BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
+#=================================================
+ynh_script_progression --message="Backing up $app before upgrading (may take a while)..." --weight=7
+
 # Backup the current version of the app
 ynh_backup_before_upgrade
-
 ynh_clean_setup () {
 	# restore it if the upgrade fails
 	ynh_restore_upgradebackup
@@ -42,41 +66,104 @@ ynh_abort_if_errors
 # STANDARD UPGRADE STEPS
 #=================================================
 
-# INSTALL DEPENDENCIES
-ynh_script_progression --message="Upgrading dependencies..."
-install_dependance
 
-# Upgrade Horde by PEAR
+
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
 ynh_script_progression --message="Upgrading source files..." --weight=6
+
 pear_cmd="$final_path/pear/pear -c $final_path/pear.conf"
 $pear_cmd channel-update pear.horde.org
 $pear_cmd upgrade -R $final_path -a -B -c pear.horde.org || true
 
-# Patch the app
+#=================================================
+# PATCH THE APP
+#=================================================
 ynh_script_progression --message="Patching application..." --weight=7
-patch_app
 
-# Configure Horde
+    local old_dir=$(pwd)
+    (cd "$final_path/horde" && patch -p1 < $YNH_CWD/../sources/sso_auth.patch) || echo "Unable to apply patches"
+    cd $old_dir
+
+#=================================================
+# CONFIGURE HORDE
+#=================================================
 ynh_script_progression --message="Configuring application..." --weight=3
-config_horde
 
+    ynh_backup_if_checksum_is_different --file "$final_path/horde/config/conf.php"
+    ynh_backup_if_checksum_is_different --file "$final_path/horde/imp/config/conf.php"
+    ynh_backup_if_checksum_is_different --file "$final_path/horde/config/registry.local.php"
+    ynh_backup_if_checksum_is_different --file "$final_path/horde/gollem/config/backends.local.php"
+    ynh_backup_if_checksum_is_different --file "$final_path/horde/ingo/config/backends.local.php"
+
+    cp ../conf/horde_conf.php "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __DOMAIN__ --replace_string "$domain" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __PATH__ --replace_string "$path_url" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __FINAL_PATH__ --replace_string "$final_path" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __DB_NAME__ --replace_string "$db_name" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __DB_USER__ --replace_string "$db_user" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __DB_PASSWORD__ --replace_string "$db_pwd" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __ADMIN_USER__ --replace_string "$admin" --target_file "$final_path/horde/config/conf.php"
+    ynh_replace_string --match_string __SECRET_KEY__ --replace_string "$secret_key" --target_file "$final_path/horde/config/conf.php"
+    
+    cp ../conf/horde_imp_conf.php "$final_path/horde/imp/config/conf.php"
+    
+    cp ../conf/horde_registry.php "$final_path/horde/config/registry.local.php"
+    ynh_replace_string --match_string __PATH__ --replace_string "$path_url" --target_file "$final_path/horde/config/registry.local.php"
+
+    cp ../conf/gollem_backends.php "$final_path/horde/gollem/config/backends.local.php"
+    ynh_replace_string --match_string __GOLLEM_DATA_DIR__ --replace_string "$gollem_data_dir" --target_file "$final_path/horde/gollem/config/backends.local.php"
+
+    cp ../conf/ingo_backends.php "$final_path/horde/ingo/config/backends.local.php"
+
+    ynh_store_file_checksum --file "$final_path/horde/config/conf.php"
+    ynh_store_file_checksum --file "$final_path/horde/imp/config/conf.php"
+    ynh_store_file_checksum --file "$final_path/horde/config/registry.local.php"
+    ynh_store_file_checksum --file "$final_path/horde/gollem/config/backends.local.php"
+    ynh_store_file_checksum --file "$final_path/horde/ingo/config/backends.local.php"
+
+#=================================================
 # NGINX CONFIGURATION
-# Create a dedicated nginx config
-ynh_script_progression --message="Configuring nginx..." --weight=1
-config_nginx
+#=================================================
+ynh_script_progression --message="Upgrading NGINX web server configuration..." --weight=2
+
+# Create a dedicated NGINX config
+ynh_add_nginx_config
 
 #=================================================
 # GENERIC FINALIZATION
 #=================================================
-
 # SECURE FILES AND DIRECTORIES
+#=================================================
 ynh_script_progression --message="Protecting directory..."
-set_permission
 
+chown -R www-data:$app $final_path
+chown -R www-data:$app $gollem_data_dir
+chmod u=rwX,g=rwX,o= -R $final_path
+chmod u=rwX,g=rwX,o= -R $gollem_data_dir
+
+#=================================================
 # SETUP LOGROTATE
-ynh_script_progression --message="Configuring log rotation..."
+#=================================================
+ynh_script_progression --message="Configuring log rotation..." --time --weight=1
+
 ynh_use_logrotate $final_path/horde --nonappend --specific_user www-data/horde
 ynh_use_logrotate $final_path/horde/services --append --specific_user www-data/horde
 ynh_use_logrotate $final_path/horde/services/portal --append --specific_user www-data/horde
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# RELOAD NGINX
+#=================================================
+ynh_script_progression --message="Reloading NGINX web server..." --weight=2
+
+ynh_systemd_action --service_name=nginx --action=reload
+
+#=================================================
+# END OF SCRIPT
+#=================================================
 
 ynh_script_progression --message="Upgrade of $app completed" --last

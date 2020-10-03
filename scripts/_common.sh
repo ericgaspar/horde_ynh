@@ -4,17 +4,21 @@
 # SET ALL CONSTANTS
 #=================================================
 
-app=$YNH_APP_INSTANCE_NAME
-final_path="/var/www/$app"
+
 gollem_data_dir="/home/yunohost.app/$app"
+
+YNH_PHP_VERSION="7.3"
+
+extra_php_dependencies="php${YNH_PHP_VERSION}-pear php${YNH_PHP_VERSION}-imagick php${YNH_PHP_VERSION}-tidy php${YNH_PHP_VERSION}-bcmath"
+
 
 #=================================================
 # DEFINE ALL COMMON FONCTIONS
 #=================================================
 
-install_dependance() {
-    ynh_install_app_dependencies php-pear expect 'php5-imagick|php-imagick' 'php5-tidy|php-tidy' php-bcmath
-}
+# install_dependance() {
+#     ynh_install_app_dependencies php-pear expect 'php5-imagick|php-imagick' 'php5-tidy|php-tidy' php-bcmath
+# }
 
 patch_app() {
     local old_dir=$(pwd)

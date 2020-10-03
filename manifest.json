@@ -14,12 +14,12 @@
         "email": "josue@tille.ch"
     },
     "requirements": {
-        "yunohost": ">= 3.5.2.2"
+        "yunohost": ">= 3.8.1"
     },
     "multi_instance": true,
     "services": [
         "nginx",
-        "php5-fpm",
+        "php7.0-fpm",
         "mysql"
     ],
     "arguments": {
@@ -57,7 +57,7 @@
                 "type": "boolean",
                 "ask": {
                     "en": "Is it a public server?",
-                    "fr": "Est-ce un serveur publique?"
+                    "fr": "Est-ce un serveur publique ?"
             },
                 "default": false
             },
@@ -66,7 +66,7 @@
                 "type": "boolean",
                 "ask": {
                     "en": "Would you like to enable the caldDav/cardDAV service autodiscovery?",
-                    "fr": "Voulez-vous activer l'autodécouverte des services calDAV/cardDAV?"
+                    "fr": "Voulez-vous activer l'autodécouverte des services calDAV/cardDAV ?"
             },
                 "default": false
             },

@@ -1,37 +1,31 @@
-Horde for yunohost
-==================
+# Horde for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/horde.svg)](https://ci-apps.yunohost.org/ci/apps/horde%20%28Community%29/lastBuild/consoleFull)  
+[![Integration level](https://dash.yunohost.org/integration/horde.svg)](https://dash.yunohost.org/appci/app/horde) ![](https://ci-apps.yunohost.org/ci/badges/horde.status.svg) ![](https://ci-apps.yunohost.org/ci/badges/horde.maintain.svg)  
 [![Install horde with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=horde)
 
 > *This package allow you to install horde quickly and simply on a YunoHost server.  
 If you don't have YunoHost, please see [here](https://yunohost.org/#/install) to know how to install and enjoy it.*
 
-Overview
---------
+## Overview
 
 A groupware (webmail, adressbook, calendar) witch use PHP
 
 **Shipped version:** 5.2.22
 
-Screenshots
------------
+## Screenshots
 
 ![](https://www.horde.org/images/slides/h5slider.png)
 
-Demo
-----
+## Demo
 
 * [Official demo](http://demo.horde.org/)
 
-Documentation
--------------
+## Documentation
 
  * Official documentation: https://wiki.horde.org/
  * YunoHost documentation: There no other documentations, feel free to contribute.
 
-YunoHost specific features
---------------------------
+## YunoHost specific features
 
 ### Multi-users support
 
@@ -39,18 +33,10 @@ This app support the SSO and LDAP.
 
 ### Supported architectures
 
-* x86-64b - [![Build Status](https://ci-apps.yunohost.org/ci/logs/horde%20(Community).svg)](https://ci-apps.yunohost.org/ci/apps/horde/)
+* x86-64 - [![Build Status](https://ci-apps.yunohost.org/ci/logs/horde%20(Community).svg)](https://ci-apps.yunohost.org/ci/apps/horde/)
 * ARMv8-A - [![Build Status](https://ci-apps-arm.yunohost.org/ci/logs/horde%20(Community).svg)](https://ci-apps-arm.yunohost.org/ci/apps/horde/)
-* Jessie x86-64b - [![Build Status](https://ci-stretch.nohost.me/jenkins/job/horde%20(Community).svg)](https://ci-stretch.nohost.me/jenkins/job/horde/)
 
-
-<!--Limitations
------------
-
-* Any known limitations.-->
-
-Additional informations
------------------------
+## Additional informations
 
 ### Customisation
 
@@ -103,31 +89,19 @@ For calendar, task and addressbook activeSync has been configured but not yet te
 - Complete the form and save it.
 - You might be able to sed an email now.
 
-Links
------
+
+## Links
 
  * Report a bug: https://github.com/YunoHost-Apps/horde_ynh/issues
  * App website: https://www.horde.org/
+ * Upstream app repository: Link to the official repository of the upstream app.
  * YunoHost website: https://yunohost.org/
 
 ---
 
-Install
--------
+## Developer info
 
-From command line:
-
-`sudo yunohost app install -l horde https://github.com/YunoHost-Apps/horde_ynh`
-
-Upgrade
--------
-
-From command line:
-
-`sudo yunohost app upgrade horde -u https://github.com/YunoHost-Apps/horde_ynh`
-
-Developers infos
-----------------
+Please send your pull request to the [testing branch](https://github.com/YunoHost-Apps/horde_ynh/tree/testing).
 
 To try the testing branch, please proceed like that.
 ```
@@ -135,16 +109,3 @@ sudo yunohost app install https://github.com/YunoHost-Apps/horde_ynh/tree/testin
 or
 sudo yunohost app upgrade horde -u https://github.com/YunoHost-Apps/horde_ynh/tree/testing --debug
 ```
-
-License
--------
-
-Horde is published under the GPL-2.0, LGPL-2.1, BSD-2-Clause, ASL, OSI certified
-All information about the licence for each part is available here : http://pear.horde.org/
-
-TODO
-----
-
-- [ ] Service auto-discovery test
-- [ ] Improve doc
-- [ ] Improve https://vm-yh-2.lan/horde/test.php to have all optional dependence installed
